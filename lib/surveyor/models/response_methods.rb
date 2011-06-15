@@ -25,10 +25,9 @@ module Surveyor
             result[:answer_id] = result[:answer_id].
               compact.delete_if(&:blank?) if result[:answer_id].is_a?(Array)
 
-            if (result[:answer_id].present? && result[:string_value] &&
-                Answer.exists?(result[:answer_id]))
-              answer = Answer.find(result[:answer_id])
-              unless answer.is_a?(Array)
+            if (result[:answer_id].present? && result[:string_value])
+              answer = Answer.find_all_by_id(result[:answer_id])
+              unless answer.blank? || answer.is_a?(Array)
                 result.delete(:string_value) unless (answer.response_class &&
                                                      answer.response_class.to_sym == :string)
               end
