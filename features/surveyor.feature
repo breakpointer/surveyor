@@ -57,6 +57,7 @@ Feature: Survey creation
     Then there should be 1 response set with 1 responses with:
       | string_value |
       | beef |
+    Then the survey should be complete
 
     When I start the "Favorites" survey
     And I fill in "food" with "chicken"
@@ -97,5 +98,59 @@ Feature: Survey creation
     Then the element "input[type='text']:first" should have the class "my_custom_class"
     # Then the element "input[type='text']:last" should not contain the class attribute
     
+  Scenario: A pick one question with an option for other
+    Given the survey
+    """
+      survey "Favorites" do
+        section "Foods" do
+          q "What is the best meat?", :pick => :one
+          a "bacon"
+          a "chicken"
+          a "beef"
+          a "other", :string
+        end
+      end
+    """
+    When I start the "Favorites" survey
+    Then I choose "bacon"
+    And I press "Click here to finish"
+    Then there should be 1 response set with 1 response with:
+    | bacon |
+
+  Scenario: Repeater with a dropdown
+    Given the survey
+    """
+      survey "Movies" do
+        section "Preferences" do
+          repeater "What are you favorite genres?" do
+            q "Make", :pick => :one, :display_type => :dropdown
+            a "Action"
+            a "Comedy"
+            a "Mystery"
+          end
+        end
+      end
+    """
+    When I start the "Movies" survey
+    Then a dropdown should exist with the options "Action, Comedy, Mystery"
     
+  Scenario: A pick one question with an option for other
+    Given the survey
+    """
+      survey "Favorites" do
+        section "Foods" do
+          q "What is the best meat?", :pick => :one
+          a "bacon"
+          a "chicken"
+          a "beef"
+          a "other", :string
+        end
+      end
+    """
+    When I start the "Favorites" survey
+    Then I choose "other"
+    And I fill in "/.*string_value.*/" with "shrimp"
+    And I press "Click here to finish"
+    Then there should be 1 response set with 1 response with:
+    | shrimp |
     

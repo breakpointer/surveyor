@@ -11,7 +11,12 @@ begin
     gem.authors = ["Brian Chamberlain", "Mark Yoon"]
     gem.add_dependency 'haml'
     gem.add_dependency 'fastercsv'
-    # gem is a Gem::Specification... see http://www.rubygems.org/read/chapter/20 for additional settings
+    gem.add_dependency 'formtastic'
+    gem.add_dependency 'uuid'
+    gem.add_development_dependency "yard", ">= 0"
+    gem.add_development_dependency "rake"
+    gem.add_development_dependency "rspec"
+    gem.add_development_dependency "jeweler"
   end
   Jeweler::GemcutterTasks.new
 

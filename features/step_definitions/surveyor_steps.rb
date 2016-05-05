@@ -4,7 +4,7 @@ When /^I start the "([^"]*)" survey$/ do |name|
   click_button "Take it"
 end
 
-Then /^there should be (\d+) response set with (\d+) responses with:$/ do |rs_num, r_num, table|
+Then /^there should be (\d+) response set with (\d+) responses? with:$/ do |rs_num, r_num, table|
   ResponseSet.count.should == rs_num.to_i
   Response.count.should == r_num.to_i
   table.hashes.each do |hash|
@@ -35,4 +35,18 @@ end
 
 Then /^the element "([^"]*)" should have the class "([^"]*)"$/ do |selector, css_class|
   response.should have_selector(selector, :class => css_class)
+end
+
+Then /^the survey should be complete$/ do
+  ResponseSet.first.should be_complete
+end
+
+Then /^a dropdown should exist with the options "([^"]*)"$/ do |options_text|
+  response.should have_selector('select')
+  options = options_text.split(',').collect(&:strip)
+  within "select" do |select|
+    options.each do |o|
+      select o
+    end
+  end
 end

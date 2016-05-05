@@ -1,0 +1,11 @@
+%h1 Listing Surveys
+%table.list_table
+  %tr
+    %th ID
+    %th Name
+    %th Operation
+  - @surveys.each do |survey|
+    %tr
+      %td= h survey.id
+      %td= h survey.title
+      %td= link_to "show results list (#{survey.response_sets.count})", result_path(survey.access_code)

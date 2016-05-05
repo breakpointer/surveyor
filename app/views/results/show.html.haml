@@ -1,0 +1,36 @@
+%table#results_list.display
+  %thead
+    %tr
+      %th ID
+      %th Code
+      - @questions.each do |question|
+        - next if question.display_order == 1
+        %th{:title => "#{question.text}"}= question.text.truncate(20)
+  %tbody
+    - @response_sets.each do |r_set|
+      %tr.gradeA
+        %td= h r_set.id
+        %td= h r_set.access_code
+        - @questions.each do |question|
+          - next if question.display_order == 1
+          %td!= display_response(r_set,question)
+  %tfoot
+    %tr
+      %td= ""
+      %td= ""
+      - @questions.each_with_index do |question,index|
+        - next if question.display_order == 1
+        %td{:title => "#{question.text}"}= ""
+
+%br
+%br
+%br
+
+= link_to "Back to Results", results_path
+
+:javascript
+  $(document).ready(function(){
+    $('#results_list').dataTable({
+      "sPaginationType": "full_numbers"
+    });
+  });

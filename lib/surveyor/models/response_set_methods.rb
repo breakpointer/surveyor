@@ -7,35 +7,40 @@ module Surveyor
         base.send :belongs_to, :user
         base.send :has_many, :responses, :dependent => :destroy
         base.send :accepts_nested_attributes_for, :responses, :allow_destroy => true
-        
+
         @@validations_already_included ||= nil
         unless @@validations_already_included
           # Validations
           base.send :validates_presence_of, :survey_id
           base.send :validates_associated, :responses
           base.send :validates_uniqueness_of, :access_code
-          
+
           @@validations_already_included = true
         end
 
         # Attributes
         base.send :attr_protected, :completed_at
-        
+
         # Class methods
         base.instance_eval do
           def reject_or_destroy_blanks(hash_of_hashes)
             result = {}
-            (hash_of_hashes || {}).each_pair do |k, hash|
+            (hash_of_hashes || {}).each_pair do |response_id, hash|
+              hash = Response.applicable_attributes(hash)
+
               if has_blank_value?(hash)
-                result.merge!({k => hash.merge("_destroy" => "true")}) if hash.has_key?("id")
+                result.merge!({response_id => hash.merge("_destroy" => "true")}) if hash.has_key?("id")
               else
-                result.merge!({k => hash})
+                result.merge!({response_id => hash})
               end
             end
             result
           end
+
           def has_blank_value?(hash)
-            hash["answer_id"].blank? or hash.any?{|k,v| v.is_a?(Array) ? v.all?{|x| x.to_s.blank?} : v.to_s.blank?}
+            hash["answer_id"].blank? or hash.any? do |k,v|
+              v.is_a?(Array) ? v.all? { |x| x.to_s.blank? } : v.to_s.blank?
+            end
           end
         end
       end
@@ -75,6 +80,10 @@ module Surveyor
         self.completed_at = Time.now
       end
 
+      def complete?
+        !completed_at.nil?
+      end
+
       def correct?
         responses.all?(&:correct?)
       end
@@ -103,6 +112,9 @@ module Surveyor
       def is_unanswered?(question)
         self.responses.detect{|r| r.question_id == question.id}.nil?
       end
+      def is_group_unanswered?(group)
+        group.questions.any?{|question| is_unanswered?(question)}
+      end
 
       # Returns the number of response groups (count of group responses enterted) for this question group
       def count_group_responses(questions)
@@ -110,7 +122,15 @@ module Surveyor
       end
 
       def unanswered_dependencies
-        dependencies.select{|d| d.is_met?(self) and self.is_unanswered?(d.question)}.map(&:question)
+        unanswered_question_dependencies + unanswered_question_group_dependencies
+      end
+
+      def unanswered_question_dependencies
+        dependencies.select{|d| d.is_met?(self) and d.question and self.is_unanswered?(d.question)}.map(&:question)
+      end
+
+      def unanswered_question_group_dependencies
+        dependencies.select{|d| d.is_met?(self) and d.question_group and self.is_group_unanswered?(d.question_group)}.map(&:question_group)
       end
 
       def all_dependencies(question_ids = nil)

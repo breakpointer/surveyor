@@ -24,3 +24,5 @@ testbed/db/*
 testbed/.bundle
 testbed/*
 surveys/fixtures/*.yml
+.rvmrc
+Gemfile.lock

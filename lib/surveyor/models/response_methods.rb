@@ -10,10 +10,31 @@ module Surveyor
         unless @@validations_already_included
           # Validations
           base.send :validates_presence_of, :response_set_id, :question_id, :answer_id
-          
+
           @@validations_already_included = true
         end
         base.send :include, Surveyor::ActsAsResponse # includes "as" instance method
+
+        # survey_section_id
+        base.send :before_save, Proc.new{ |r| r.survey_section_id = r.question.survey_section_id if( r.question ) }
+
+        # Class methods
+        base.instance_eval do
+          def applicable_attributes(attrs)
+            result = HashWithIndifferentAccess.new(attrs)
+            result[:answer_id] = result[:answer_id].
+              compact.delete_if(&:blank?) if result[:answer_id].is_a?(Array)
+
+            if (result[:answer_id].present? && result[:string_value])
+              answer = Answer.find_all_by_id(result[:answer_id])
+              unless answer.blank? || answer.is_a?(Array)
+                result.delete(:string_value) unless (answer.response_class &&
+                                                     answer.response_class.to_sym == :string)
+              end
+            end
+            result
+          end
+        end
       end
 
       # Instance Methods
